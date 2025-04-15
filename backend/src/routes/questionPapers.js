@@ -5,7 +5,8 @@ const {
   uploadQuestionPaper, 
   getQuestionPapers, 
   getQuestionPaper, 
-  downloadQuestionPaper 
+  downloadQuestionPaper,
+  deleteQuestionPaper
 } = require('../controllers/questionPapers');
 const { protect } = require('../middleware/auth');
 
@@ -49,7 +50,8 @@ router.route('/upload')
   .post(protect, upload.single('file'), uploadQuestionPaper);
 
 router.route('/:id')
-  .get(protect, getQuestionPaper);
+  .get(protect, getQuestionPaper)
+  .delete(protect, deleteQuestionPaper);
 
 router.route('/:id/download')
   .get(protect, downloadQuestionPaper);

@@ -305,4 +305,65 @@ exports.downloadQuestionPaper = async (req, res) => {
       error: 'Failed to download question paper'
     });
   }
+};
+
+// @desc    Delete a question paper
+// @route   DELETE /api/question-papers/:id
+// @access  Private (only for the uploader)
+exports.deleteQuestionPaper = async (req, res) => {
+  try {
+    const questionPaper = await QuestionPaper.findById(req.params.id);
+    
+    if (!questionPaper) {
+      return res.status(404).json({
+        success: false,
+        error: 'Question paper not found'
+      });
+    }
+    
+    // Check if current user is the uploader of this paper
+    if (questionPaper.uploadedBy.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        error: 'Not authorized to delete this question paper'
+      });
+    }
+    
+    // Get the user
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found'
+      });
+    }
+    
+    // Remove credits that were earned from uploading (5 credits per upload)
+    if (user.credits >= 5) {
+      user.credits -= 5;
+      user.uploadCount -= 1;
+      await user.save();
+    }
+    
+    // Delete the physical file from storage
+    if (fs.existsSync(questionPaper.filePath)) {
+      fs.unlinkSync(questionPaper.filePath);
+    }
+    
+    // Delete the document from database
+    await questionPaper.deleteOne();
+    
+    res.status(200).json({
+      success: true,
+      data: {},
+      message: 'Question paper deleted successfully and credits adjusted'
+    });
+  } catch (error) {
+    console.error('Error deleting question paper:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete question paper'
+    });
+  }
 }; 

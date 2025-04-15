@@ -102,4 +102,14 @@ export const searchQuestionPapers = async (searchTerm) => {
   } catch (error) {
     throw error.response?.data || error;
   }
+};
+
+// Delete a question paper by ID (only works if current user is the uploader)
+export const deleteQuestionPaper = async (id) => {
+  try {
+    const response = await axios.delete(`${API_URL}/${id}`, authConfig());
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error;
+  }
 }; 

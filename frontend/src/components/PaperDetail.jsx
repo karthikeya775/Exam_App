@@ -13,16 +13,24 @@ import {
   Alert,
   Avatar,
   Card,
-  CardContent
+  CardContent,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import {
   Download as DownloadIcon,
   PictureAsPdf as PdfIcon,
   Image as ImageIcon,
   Description as DocIcon,
-  ArrowBack as ArrowBackIcon
+  ArrowBack as ArrowBackIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
-import { getQuestionPaperById, downloadQuestionPaper } from '../services/questionPaperService';
+import { getQuestionPaperById, downloadQuestionPaper, deleteQuestionPaper } from '../services/questionPaperService';
 import { AuthContext } from '../context/AuthContext';
 
 const PaperDetail = () => {
@@ -36,6 +44,11 @@ const PaperDetail = () => {
   const [downloadLoading, setDownloadLoading] = useState(false);
   const [downloadError, setDownloadError] = useState(null);
   
+  // Delete-related state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+  
   useEffect(() => {
     const fetchPaper = async () => {
       try {
@@ -44,6 +57,18 @@ const PaperDetail = () => {
         
         const result = await getQuestionPaperById(id);
         setPaper(result.data);
+        
+        // Debug logs to inspect paper and currentUser data
+        console.log('Paper data:', result.data);
+        console.log('Paper uploadedBy:', result.data.uploadedBy);
+        console.log('Current user:', currentUser);
+        console.log('isUploader check would be:', 
+          result.data && 
+          currentUser && 
+          result.data.uploadedBy && 
+          (result.data.uploadedBy._id === currentUser._id || result.data.uploadedBy === currentUser._id)
+        );
+        
         setLoading(false);
       } catch (error) {
         console.error('Error fetching paper:', error);
@@ -73,6 +98,37 @@ const PaperDetail = () => {
     }
   };
   
+  // Handle delete confirmation dialog
+  const openDeleteDialog = () => {
+    setDeleteDialogOpen(true);
+  };
+  
+  const closeDeleteDialog = () => {
+    setDeleteDialogOpen(false);
+  };
+  
+  // Handle delete operation
+  const handleDelete = async () => {
+    try {
+      setDeleteLoading(true);
+      setDeleteError(null);
+      
+      await deleteQuestionPaper(id);
+      
+      setDeleteLoading(false);
+      closeDeleteDialog();
+      
+      // Redirect after successful deletion
+      navigate('/search', { 
+        state: { notification: 'Question paper was successfully deleted' } 
+      });
+    } catch (error) {
+      console.error('Delete error:', error);
+      setDeleteError(error.error || 'Failed to delete paper');
+      setDeleteLoading(false);
+    }
+  };
+  
   const getFileIcon = (fileType) => {
     switch(fileType) {
       case 'pdf':
@@ -88,6 +144,22 @@ const PaperDetail = () => {
         return <DocIcon fontSize="large" />;
     }
   };
+  
+  // Check if current user is the uploader of this paper
+  const isUploader = paper && currentUser && paper.uploadedBy && (
+    // Check both _id and id properties to handle inconsistency in property naming
+    (paper.uploadedBy._id === currentUser._id || paper.uploadedBy._id === currentUser.id) || 
+    (paper.uploadedBy === currentUser._id || paper.uploadedBy === currentUser.id)
+  );
+  
+  // Debug log for isUploader value
+  console.log('Final isUploader value:', isUploader);
+  console.log('Comparison check:', {
+    'paper.uploadedBy._id': paper?.uploadedBy?._id,
+    'currentUser._id': currentUser?._id,
+    'currentUser.id': currentUser?.id,
+    'Match?': paper?.uploadedBy?._id === currentUser?.id
+  });
   
   if (loading) {
     return (
@@ -137,13 +209,28 @@ const PaperDetail = () => {
   
   return (
     <Container maxWidth="md" sx={{ mt: 4, mb: 6 }}>
-      <Button 
-        startIcon={<ArrowBackIcon />} 
-        onClick={() => navigate(-1)}
-        sx={{ mb: 3 }}
-      >
-        Back
-      </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Button 
+          startIcon={<ArrowBackIcon />} 
+          onClick={() => navigate(-1)}
+        >
+          Back
+        </Button>
+        
+        {/* Delete button - only shown if current user is the uploader */}
+        {isUploader && (
+          <Tooltip title="Delete this paper">
+            <Button 
+              variant="outlined" 
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={openDeleteDialog}
+            >
+              Delete
+            </Button>
+          </Tooltip>
+        )}
+      </Box>
       
       <Paper elevation={2} sx={{ p: 4 }}>
         <Grid container spacing={3}>
@@ -207,6 +294,16 @@ const PaperDetail = () => {
                 </Box>
               </Box>
             )}
+            
+            {/* Show uploader information */}
+            {paper.uploadedBy && (
+              <Box sx={{ mt: 3 }}>
+                <Divider sx={{ mb: 2 }} />
+                <Typography variant="body2" color="textSecondary">
+                  Uploaded by: {paper.uploadedBy.name || 'Anonymous'} on {formatDate(paper.createdAt)}
+                </Typography>
+              </Box>
+            )}
           </Grid>
           
           <Grid item xs={12} md={4}>
@@ -251,38 +348,41 @@ const PaperDetail = () => {
                 </Typography>
               </CardContent>
             </Card>
-            
-            <Card>
-              <CardContent>
-                <Typography variant="h6" component="h3" gutterBottom>
-                  Paper Info
-                </Typography>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Avatar
-                    src={paper.uploadedBy?.avatar}
-                    alt={paper.uploadedBy?.name}
-                    sx={{ width: 32, height: 32, mr: 1 }}
-                  />
-                  <Typography variant="body2">
-                    Uploaded by: {paper.uploadedBy?.name || 'Unknown'}
-                  </Typography>
-                </Box>
-                
-                <Divider sx={{ my: 1 }} />
-                
-                <Typography variant="body2" color="textSecondary">
-                  Upload Date: {formatDate(paper.createdAt)}
-                </Typography>
-                
-                <Typography variant="body2" color="textSecondary">
-                  Downloads: {paper.downloadCount}
-                </Typography>
-              </CardContent>
-            </Card>
           </Grid>
         </Grid>
       </Paper>
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={closeDeleteDialog}
+      >
+        <DialogTitle>Confirm Deletion</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to delete this question paper? This action cannot be undone.
+          </DialogContentText>
+          {deleteError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {deleteError}
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeDeleteDialog} disabled={deleteLoading}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleDelete} 
+            color="error" 
+            disabled={deleteLoading}
+            variant="contained"
+            startIcon={deleteLoading ? <CircularProgress size={20} /> : <DeleteIcon />}
+          >
+            {deleteLoading ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

@@ -1,20 +1,21 @@
 import { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
-  AppBar, 
-  Toolbar, 
-  Typography, 
-  Button, 
-  IconButton, 
-  Avatar, 
-  Menu, 
-  MenuItem, 
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  IconButton,
+  Avatar,
+  Menu,
+  MenuItem,
   Box,
   Badge,
-  Tooltip
+  Tooltip,
+  Container
 } from '@mui/material';
-import { 
-  Menu as MenuIcon, 
+import {
+  Menu as MenuIcon,
   Search as SearchIcon,
   CloudUpload as CloudUploadIcon,
   Logout as LogoutIcon,
@@ -27,7 +28,7 @@ const Navbar = () => {
   const { currentUser, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
-  
+
   const handleMenu = (event) => {
     setAnchorEl(event.currentTarget);
   };
@@ -44,117 +45,168 @@ const Navbar = () => {
 
   const handleProfile = () => {
     handleClose();
+    console.log("hi!!!!!!")
     navigate('/profile');
+    console.log("navigated to profile...")
+  };
+
+  // Handle title click based on authentication status
+  const handleTitleClick = (e) => {
+    if (currentUser) {
+      e.preventDefault(); // Prevent default link behavior
+      navigate('/dashboard');
+    }
+    // If not logged in, default link behavior will navigate to '/'
   };
 
   return (
-    <AppBar position="static">
-      <Toolbar>
-        <Typography
-          variant="h6"
-          component={Link}
-          to="/dashboard"
-          sx={{
-            flexGrow: 1,
-            textDecoration: 'none',
-            color: 'inherit',
-            display: 'flex',
-            alignItems: 'center'
-          }}
-        >
-          Exam Paper Repository
-        </Typography>
+    <AppBar position="sticky" sx={{ 
+      background: 'linear-gradient(135deg,rgb(0, 0, 0) 0%,rgb(0, 0, 0) 100%)',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+    }}>
+      <Container maxWidth="lg">
+        <Toolbar sx={{ px: { xs: 1, sm: 2 }, py: 1 }}>
+          <Typography 
+            variant="h5" 
+            component={Link} 
+            to={currentUser ? "/dashboard" : "/"} // Conditionally set destination
+            onClick={handleTitleClick}
+            sx={{ 
+              flexGrow: 1, 
+              textDecoration: 'none', 
+              color: 'white',
+              fontWeight: 700,
+              letterSpacing: '0.5px',
+              cursor: 'pointer'
+            }}
+          >
+            Exam Paper Repository
+          </Typography>
 
-        {currentUser ? (
-          <>
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 2 }}>
-              <Tooltip title="Search Papers">
-                <Button
-                  color="inherit"
-                  startIcon={<SearchIcon />}
-                  component={Link}
-                  to="/search"
+          {currentUser ? (
+            <>
+              <Button
+                component={Link}
+                to="/search"
+                color="inherit"
+                startIcon={<SearchIcon />}
+                sx={{ 
+                  mx: 1, 
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 500
+                }}
+              >
+                Search
+              </Button>
+              <Button
+                component={Link}
+                to="/upload"
+                color="inherit"
+                startIcon={<CloudUploadIcon />}
+                sx={{ 
+                  mx: 1, 
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 500
+                }}
+              >
+                Upload
+              </Button>
+              <Tooltip title={`Credits: ${currentUser.credits || 0}`}>
+                <Button 
+                  color="inherit" 
+                  sx={{ 
+                    mx: 1, 
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 500
+                  }}
                 >
-                  Search
+                  Credits: {currentUser.credits || 0}
                 </Button>
               </Tooltip>
-              
-              <Tooltip title="Upload Paper">
-                <Button
-                  color="inherit"
-                  startIcon={<CloudUploadIcon />}
-                  component={Link}
-                  to="/upload"
-                >
-                  Upload
-                </Button>
-              </Tooltip>
-              
-              <Tooltip title="Your Credits">
-                <Badge 
-                  badgeContent={currentUser.credits} 
-                  color="secondary"
-                  sx={{ mr: 2 }}
-                >
-                  <Button color="inherit" component={Link} to="/profile">
-                    Credits
-                  </Button>
-                </Badge>
-              </Tooltip>
-            </Box>
-
-            <Tooltip title="Account">
               <IconButton
                 onClick={handleMenu}
                 color="inherit"
-                size="small"
+                size="large"
                 sx={{ ml: 1 }}
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
               >
                 {currentUser.avatar ? (
-                  <Avatar
-                    src={currentUser.avatar}
+                  <Avatar 
+                    src={currentUser.avatar} 
                     alt={currentUser.name}
-                    sx={{ width: 32, height: 32 }}
+                    sx={{ 
+                      width: 40, 
+                      height: 40,
+                      border: '2px solid white' 
+                    }}
                   />
                 ) : (
-                  <Avatar sx={{ width: 32, height: 32 }}>
+                  <Avatar sx={{ 
+                    width: 40, 
+                    height: 40,
+                    bgcolor: '#f50057',
+                    border: '2px solid white',
+                    fontWeight: 600
+                  }}>
                     {currentUser.name?.charAt(0) || 'U'}
                   </Avatar>
                 )}
               </IconButton>
-            </Tooltip>
-            
-            <Menu
-              id="menu-appbar"
-              anchorEl={anchorEl}
-              keepMounted
-              open={Boolean(anchorEl)}
-              onClose={handleClose}
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+                PaperProps={{
+                  sx: {
+                    mt: 1.5,
+                    borderRadius: 2,
+                    minWidth: 180,
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
+                  }
+                }}
+              >
+                <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
+                  <PersonIcon sx={{ mr: 2, color: '#1565c0' }} />
+                  Profile
+                </MenuItem>
+                <MenuItem onClick={() => { handleClose(); navigate('/dashboard'); }} sx={{ py: 1.5 }}>
+                  <DashboardIcon sx={{ mr: 2, color: '#1565c0' }} />
+                  Dashboard
+                </MenuItem>
+                <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
+                  <LogoutIcon sx={{ mr: 2, color: '#f44336' }} />
+                  Logout
+                </MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <Button 
+              component={Link} 
+              to="/login" 
+              variant="contained" 
+              color="secondary"
+              sx={{ 
+                borderRadius: 2,
+                px: 3,
+                py: 1,
+                textTransform: 'none',
+                fontWeight: 600,
+                boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                backgroundColor: '#f50057',
+                '&:hover': {
+                  backgroundColor: '#c51162'
+                }
+              }}
             >
-              <MenuItem onClick={handleProfile}>
-                <PersonIcon fontSize="small" sx={{ mr: 1 }} />
-                Profile
-              </MenuItem>
-              <MenuItem onClick={() => { handleClose(); navigate('/dashboard'); }}>
-                <DashboardIcon fontSize="small" sx={{ mr: 1 }} />
-                Dashboard
-              </MenuItem>
-              <MenuItem onClick={handleLogout}>
-                <LogoutIcon fontSize="small" sx={{ mr: 1 }} />
-                Logout
-              </MenuItem>
-            </Menu>
-          </>
-        ) : (
-          <Button color="inherit" component={Link} to="/">
-            Login
-          </Button>
-        )}
-      </Toolbar>
+              Login
+            </Button>
+          )}
+        </Toolbar>
+      </Container>
     </AppBar>
   );
 };
 
-export default Navbar; 
+export default Navbar;

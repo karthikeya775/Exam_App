@@ -16,6 +16,7 @@ import Search from './components/Search';
 import Upload from './components/Upload';
 import Profile from './components/Profile';
 import PaperDetail from './components/PaperDetail';
+import Home from './components/Home'; // You'll need to create this component
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -51,7 +52,8 @@ function App() {
         <Router>
           <Navbar />
           <Routes>
-            <Route path="/" element={<Login />} />
+            <Route path="/" element={<Home />} /> {/* Home page about the repository */}
+            <Route path="/login" element={<Login />} /> {/* Separate login route */}
             <Route
               path="/dashboard"
               element={
