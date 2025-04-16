@@ -1,0 +1,152 @@
+=== Page 1 ===
+Indian Institute of Technology (ISM), Dhanbad
+Department of Computer Science and Engineering
+Theory of Computation (CSC208)
+
+Mid Semester, Date: 25 February 2024
+
+’
+
+Timing: 2PM-4PM . Winter Semester 2023-24 Max mark: 60
+Attempt all questions. Write full justifications for your answers to be evaluated.
+1. Consider the following language over the alphabet. © = {0, 1}
+L= {w € d*|w starts with 10 but does not end with 10}
+
+(a) Write a regular expression for L (5)
+(b) Design a DFA for L (7)
+
+hequnaie expr on
+
+lol t+loo to (i+0)* Cutol+ oo)
+
+= 12 ( Lt Ot (tt0)* (tort 00))
+
+
+
+=== Page 2 ===
+2. (a) Convert the following NFA to an equivalent DFA using the subset-construction
+procedure (No marks shall be awarded for using any other method). Clearly describe
+all the steps (partial reasoning is not acceptable). Draw the state-transition diagram
+of the DFA with all the possible states. Write all unreachable states (that is, states
+inaccessible from the start state) in your DFA. Consider {0,1} as your input alphabet. (8)
+
+0,
+
+1
+
+pany
+
+iG
+£,
+
+Show all the possible state sequences if we run the NFA M on the string 0110110.
+From the state sequences decide whether the string is in L(M). (4)
+
+nha a
+SE rE, fx} ip hia}
+
+re
+
+2
+
+
+=== Page 3 ===
+3. Consider the following grammars. Describe the languages denoted by them. If a language
+is not regular then prove it using pumping lemma otherwise write the regular expression
+for the language (Marks will be deducted for fallacious and incomplete reasoning).
+
+(a) S > 0|1|2S2 ©)
+(b) $ > O|1|S2S ; ©
+
+®xL = faSoak|n of v eh ee]
+@ we cam pak Apt tia. Honing 20.2" ow a 1 ase
+O) dy ste cmaibion a pumping Lemont, oe dieting
+
+he Puch Ahab lay |<m wo Ith?
+
+The are v deen an Chose o fre atin dba
+
+any pad 2 me OM
+hak we : 2
+(4 Ty we Ack bo, & Nahas os tala a
+Yow han
+The wmmbr 4 at wm i tabling aon, 1" % ,
+vomiting Hey win doves sera heos Ahan tee mene AS
+un &. So pumping Lemme Avil
+Heer, Ly ob soins, Wallis
+(e) Tr Caw be cowulid, fo a hight - “Linsan Joram.
+T
+
+rm Lab pugpalovr,
+
+S$ —> dAl IA
+
+A —> aoa [aa le fg ules .
+
+Be wil felt ee AN (ot!) (2 (otl) )*
+(ott) 2 (Ot!) 2... &Corl)
+
+
+=== Page 4 ===
+4, (a) Convert the CFG G = ({S, X,Y}, {a,b,c}, S,P) to Chomsky normal form. Do not
+
+introduce any new start symbol. (8)
+S — aXbX
+X > aY |bY |e
+Y—+X{|c
+(b) Draw the NFA corresponding to the right linear grammar G. (4)
+Yo > a ;
+Vi > abVolb
+x,y) ave
+S—> axbx vidal 1 oe abx |axb| ab] axb% g-rabx|axb| ab|axby
+bY jalb
+X—>ayfeyle =P ay by a arnt
+Y¥> X le €.—framsilton
+poduchon —_——
+unit * ae
+i a i
+bx Jaxb [ab] aXxbx : g—> ABx|AXB |ABlAxBx
+adie Comwet
+X ay [bX] a[b te X—Ay lex al b
+Clep4 YvaAy|Brfalele
+Y soy [eylelele nO eh ee
+Bae
+fo > ap, |AB2|Ae 14%
+B,> Bx There can be
+| js
+B, > *B other posedbilities.
+B
+Bi *F1
+og ay 187] e 1+ Bf Full warks
+xX > AY " pill be awa
+b ‘
+ya arjey |4! if answer b
+
+Creek.
+
+
+
+=== Page 5 ===
+5. Answer the following questions
+
+(a) Use the slot-filling algorithm to minimize the DFA. Show the table construction (Use
+of any other algorithm will induce zero marks). For each distinguishable state-pair
+clearly state why you find them distinguishable. Draw the minimized DFA. (6)
+
+(b) Find the regular expression for the DFA using the state elimination algorithm. No
+marks shall be awarded for using any other method. (6)
+
+| i £ EB.
+A,B and D ove distinguishale Seem inal)
+(Now finol) Cpbed
+Stats
+E dist.
+af | BAe Bo ave
+e ste) i ed ERY L So EXE ae ast:
+
+@ 5(n,0) ¢F and 6(8,2) EF
+Oya g F and 6(DNEF
+
+5
+
+

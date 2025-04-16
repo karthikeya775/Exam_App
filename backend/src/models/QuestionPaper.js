@@ -9,13 +9,29 @@ const QuestionPaperSchema = new mongoose.Schema({
   },
   subject: {
     type: String,
-    required: [true, 'Please add a subject'],
     trim: true
   },
   course: {
     type: String,
-    required: [true, 'Please add a course name'],
     trim: true
+  },
+  courseCode: {
+    type: String,
+    required: [true, 'Please add a course code'],
+    trim: true
+  },
+  semester: {
+    type: String,
+    required: [true, 'Please add semester'],
+    enum: ['winter', 'summer', 'monsoon'],
+    default: 'winter'
+  },
+  examDate: {
+    type: Date
+  },
+  academicYear: {
+    type: String,
+    required: [true, 'Please add academic year']
   },
   examType: {
     type: String,
@@ -69,9 +85,10 @@ const QuestionPaperSchema = new mongoose.Schema({
 // Create index for search functionality
 QuestionPaperSchema.index({ 
   subject: 'text', 
-  course: 'text', 
+  course: 'text',
+  courseCode: 'text',
   title: 'text',
   tags: 'text'
 });
 
-module.exports = mongoose.model('QuestionPaper', QuestionPaperSchema); 
+module.exports = mongoose.model('QuestionPaper', QuestionPaperSchema);

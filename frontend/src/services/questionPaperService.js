@@ -1,6 +1,7 @@
 import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api/question-papers';
+const FLASK_API_URL = 'http://localhost:5001';
 
 // Get JWT token from localStorage
 const getToken = () => localStorage.getItem('token');
@@ -32,6 +33,51 @@ export const getQuestionPaperById = async (id) => {
     return response.data;
   } catch (error) {
     throw error.response?.data || error;
+  }
+};
+
+// Extract metadata from PDF
+export const extractPdfMetadata = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await axios.post(`${FLASK_API_URL}/detect_details`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      timeout: 30000 // 30 seconds timeout for OCR processing
+    });
+    
+    console.log('Metadata extraction response:', response.data);
+    
+    // Check if we got an error response
+    if (!response.data.success) {
+      throw new Error(response.data.error || 'Failed to extract metadata');
+    }
+    
+    // Map the exam type from OCR format to backend format
+    let examType = 'other';
+    if (response.data.exam_type) {
+      // Convert OCR exam types to backend enum values
+      const examTypeMap = {
+        'Mid_Semester': 'mid-semester',
+        'End_Semester': 'end-semester',
+        'Quiz': 'quiz'
+      };
+      examType = examTypeMap[response.data.exam_type] || 'other';
+    }
+    
+    // Map response to our format
+    return {
+      courseCode: response.data.course_code || '',
+      examType: examType,
+      year: response.data.year || new Date().getFullYear(),
+      rawOcrText: response.data.raw_ocr_text || ''
+    };
+  } catch (error) {
+    console.error('Error extracting metadata from PDF:', error);
+    throw error;
   }
 };
 

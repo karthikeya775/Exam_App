@@ -1,0 +1,54 @@
+Winter Mid-Semester Examination, Session 2023-24
+
+arom nation & Semester: B.Tech (Computer Science & Engineering) VI Semester
+Ject: Computer Networks (CSC305)
+
+Structions:
+
+(a) Answer the . . .
+questions serially and to the point. : !
+) Make suitable assumption, if required. Also-give the justification for the same.
+
+Time: 2 Hour
+Max. Marks: 60
+
+Question Marks
+
+Consider the following bit stream that has been encoded using VRC, LRC and even parity. 3
+Locate the error if present and re-write the complete bit stream (after correction, if any) :
+
+11000011 11110011 1049010 00001010 +~=—«-00101011 +—:00101011 10100011
+00101011
+
+w) Draw the Differential Manchester Encoding for the given NRZ-I signal: 2
+
+(c) | We need a three-stage space-division switch with N=100. We use 10 crossbars at the first and 5
+third stages-and 4 crossbars at the middle stage. Draw the complete layout (configuration) of
+
+such a switch [Atleast show all connections between crossbars no 1, 2 and 10 of stage 1 &
+stage 3 through stage 2] and respond to the following question:
+7 Calculate the total number of cross points.
+
+(ii) Find the possible number of simultaneous connections.
+(iii) Find the possible number of simultaneous connections if we use a single crossbar (100 x
+100).
+Find the blocking factor with respect to part (ii) and (iii).
+Plot a composite signal (in time-domain) having following components (i to iii): | 3
+(i) A periodic signal having Amplitude: 15 volts and Frequency: 0 Hz.
+| GiA periodic signal having Amplitude: 10 volts and Frequency: 4 Hz
+| (iii)A periodic signal having Amplitude: 5 volts, Frequency: 4 Hz and Phase: 90°
+Also plot a frequency-domain representation of a composite signal having only first two
+
+components (i & ii).
+a The loss in a cable is usually defined in decibels per kilometer (dB/km). If the signal at the 2
+beginning of a cable with - 0.3 dB/km has a power of 2mW, what is the power of the signal at
+5km? 19ers : :
+(c) | What is a pulse stuffing TDM? Two channels, one with a bit rate of 190 kbps and another with 5
+a bit rate 180 kbps are to be multiplexed using pulse stuffing TDM with no synchronization
+bits.
+Answer the following questions:
+@ What is the size of a frame in bits?
+(ii) What is the frame rate?
+(iii) What is the duration of a frame?
+|__| Gv) What is the date rate? __|
+

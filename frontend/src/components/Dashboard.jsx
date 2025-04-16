@@ -48,7 +48,7 @@ const Dashboard = () => {
     const fetchRecentPapers = async () => {
       try {
         const result = await getQuestionPapers({ limit: 6, sort: '-createdAt' });
-        setRecentPapers(result.data);
+        setRecentPapers(result.data.slice(0, 6));
         setLoading(false);
       } catch (error) {
         console.error('Error fetching papers:', error);
@@ -302,7 +302,7 @@ const Dashboard = () => {
               }}
             >
               <TimeIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
-              Recently Added Papers
+              Latest Papers
             </Typography>
             
             {recentPapers.length > 0 && (

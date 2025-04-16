@@ -114,17 +114,18 @@ const Navbar = () => {
                 Upload
               </Button>
               <Tooltip title={`Credits: ${currentUser.credits || 0}`}>
-                <Button 
-                  color="inherit" 
+                <Typography 
                   sx={{ 
                     mx: 1, 
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 500
+                    color: 'white',
+                    fontWeight: 500,
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'default'
                   }}
                 >
                   Credits: {currentUser.credits || 0}
-                </Button>
+                </Typography>
               </Tooltip>
               <IconButton
                 onClick={handleMenu}

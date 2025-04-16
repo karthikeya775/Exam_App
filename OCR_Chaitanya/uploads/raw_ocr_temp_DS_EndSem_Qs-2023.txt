@@ -1,0 +1,60 @@
+Department of Computer Science and Engineering
+Indian Institute of Technology (ISM) Dhanbad
+
+End-Semester Lab Examination, Session 2023-24
+
+Course Name (Code): Data Structures Lab (CSC204) Time: 1 Hr. 45Mins.
+Subject: III B. Tech. (CSE) Max. Marks: 40
+Instructions:
+
+1. Answer any one question from Qs No. 1-2 and Qs No. 3 is Compulsory.
+
+2. After completion of the exammnation, do the following:
+
+e Program file should be named as < AdmissionNo_QuestionNo >, e.g.,
+20JE0014_Q1. Save your program ffiles into a folder, named as
+< AdmissionNo_endSem > and zip the folder.
+
+e Send the Zip folder to the e-mail id: dsalab2023@gmail.com.
+
+3. Use of Internet is strictly prohibited. You must not copy code from the internet.
+Plagiarism of the submitted code will be checked and if your code found to be copied
+from any source, your exam will be cancelled. If your code is found copied from any
+other student, then both students will get zero marks.
+
+4. Submit the code within the time limit.
+
+Questions:
+
+1. A class of students where details of each student is stored using a doubly linked list. Each
+
+node of the doubly Inked list contains the information such as Regn No. (in mteger),
+Name (in string), Branch (in string), and CGPA (in float) of a particular student. Your task
+in this problem is to create a doubly linked list which takes the input for at least 5 students
+and then perform the following task:
+
+a) Write a function arrange_ascend() to arrange data of students according to
+
+Regn No. using Insertion sort.
+
+Suggested Output Format:
+
+Regn No. Name Branch CGPA
+2 John CSE 7.2
+5 Ram ECE 8.0
+7 Hari ME 6.5
+8 Raj CSE 7.0
+10 All ECE 7.6
+
+b) Write a fimction search_data() to display data of a student with a particular
+
+Regn No.
+Sample Input:
+Enter the Regn No.: 8
+
+Sample Output:
+
+Regn No. Name Branch CGPA
+8 Raj CSE 7.0
+
+[15+5]

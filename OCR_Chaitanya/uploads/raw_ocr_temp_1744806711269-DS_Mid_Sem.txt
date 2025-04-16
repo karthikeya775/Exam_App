@@ -1,0 +1,73 @@
+ENCE AND ENGINEERING
+JAN SCHOOL OF MINES), DE
+Session 2022-23
+
+DEPARTMENT OF COMPUTER sc
+INDIAN INSTITUTE OF TECHNOLOGY (INP
+
+Monsoon Mid Semestey examination.
+
+Examination: I BTech (CSE) & BTech (Common) Time: 2 Hours
++ Weightage: 28%, Max. Marks: 40
+
+Subject: Data Structures (CSC201)
+
+Instruction
+(Gi) Answer ALL questions.
+(ii) Attempt all sub-parts of a same question ay same place and in order. os
+(iii) If you use any algorithm (covered in the Class) to solve any problem, just mention it, do not elaborate.
+
+Mark
+-Q. Ne. —— - —_ Question - ae Tha ies a
+
+1. (a) | Take the following list of functions and arrange them in ascending order of growth rate. That is, i
+
+function g(n) immediately follows function f(n) inyour list, then it should be the case that f(71) is
+
+O(g(n)). Write your answer with proper explanation:
+
+\ . P 4 . = "foa\ n
+h(a) = 2v9", fy) = 20, fxn) on /s, fy(n) = n!99", fg(n) = 2?
+(b) Measure the step counts for all 4 statements in (he following program segment to determine the overall | 5
+asymptotic upper bound on the running time of the given program segment.
+void’ example(int n)
+
+{
+imt=1,8=1; /* Statement 1 */,
+while (s <= n) /* Statement 2 */)
+{ tht; /* 8 3 */\P w eipeetrcemupensrer tt -
+worn EEE LEN YT EY HSE ta
+} i
+. i
+
+‘node. (left most) is pointed by a header pointer | 6-+3
+
+Consider a doubly linked list in which only the f
+db_head. Write two separate algorithms to perform the tasks as mentioned below:
+
+(i) Insert a new node in the given doubly linked list which is already sorted in ascending order of I.
+the key values stored in its nodes such a manner that after the insertion the sorted order must be SN ig
+retained as it is. aa 4
+
+(ii) Append a new doubly linked list in which only the last node (right most) is pointed by a header
+pointer db_tail at the end of the given doubly linked list.
+
+(b) | Suppose that each row of an 7 x n array A consists of I's and 0's such that, in any row of A, all the 1's | 3
+come before any 0's in that row. Assuming A is already in memory, write an algorithm running in OC)
+time for finding the row of A that contains the most 1
+
+You are given an array Arr|1:n] representing a min-heap and an integer ¢ You have to design an | 5
+algorithm to output al] the keys in the array that are less than ¢. For example, if ¢ = 9 and the array Arr
+is as shown below, then your algorithm should output the keys 4, 6, and 7. Note that the time complexity
+of the designed algorithm should be O(k), where k be the number of keys in Arr that are smaller than ¢.
+
+| areliee 1 2 3 4 5 7 [8 | 9 | 10 [41 [42 [13 [14a
+key 4 [11 | o | 14 | 18 —q2 | 16 [17 [| 22 | 19 | 10 [ 9 | 24
+
+(b) Consider the sequence of Jetters and asterisks given as: MID *S#6EM [BK ORA ek Dak Stee, 3
+Now, consider the queue data structure with two supporting operations: enqueuer and dequeue, Suppose
+that for the above sequence, each letter (such as M) corresponds. to an enqueue operation of that letter on |
+oe
+os > Lg tees Gr OG Hiker. |
+a” de? weed ER ok
+Nw wo Ce

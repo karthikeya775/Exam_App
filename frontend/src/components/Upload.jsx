@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -18,7 +18,8 @@ import {
   FormHelperText,
   useTheme,
   alpha,
-  Divider
+  Divider,
+  Backdrop
 } from '@mui/material';
 import { 
   CloudUpload as CloudUploadIcon, 
@@ -28,9 +29,10 @@ import {
   PictureAsPdf as PdfIcon,
   Image as ImageIcon,
   Add as AddIcon,
-  Tag as TagIcon
+  Tag as TagIcon,
+  AutoAwesome as AutoAwesomeIcon
 } from '@mui/icons-material';
-import { uploadQuestionPaper } from '../services/questionPaperService';
+import { uploadQuestionPaper, extractPdfMetadata } from '../services/questionPaperService';
 import { AuthContext } from '../context/AuthContext';
 
 const examTypes = [
@@ -58,11 +60,13 @@ const Upload = () => {
   const [tagInput, setTagInput] = useState('');
   const [extractingMetadata, setExtractingMetadata] = useState(false);
   const [metadataExtracted, setMetadataExtracted] = useState(false);
+  const [ocrText, setOcrText] = useState('');
   
   const [formData, setFormData] = useState({
     title: '',
     subject: '',
     course: '',
+    courseCode: '',
     examType: 'other',
     year: currentYear,
     description: ''
@@ -75,6 +79,38 @@ const Upload = () => {
       [name]: value
     }));
   };
+  
+  // This effect runs when a PDF file is selected to automatically extract metadata
+  useEffect(() => {
+    const extractMetadata = async () => {
+      if (file && file.type === 'application/pdf' && !metadataExtracted) {
+        try {
+          setExtractingMetadata(true);
+          setError(null);
+          
+          const extractedMetadata = await extractPdfMetadata(file);
+          
+          setFormData(prevData => ({
+            ...prevData,
+            courseCode: extractedMetadata.courseCode || prevData.courseCode,
+            examType: extractedMetadata.examType || prevData.examType,
+            year: extractedMetadata.year || prevData.year
+          }));
+          
+          setOcrText(extractedMetadata.rawOcrText || '');
+          setMetadataExtracted(true);
+          setExtractingMetadata(false);
+          
+        } catch (error) {
+          console.error('Metadata extraction error:', error);
+          setError('Failed to extract metadata from PDF. Please fill in the details manually.');
+          setExtractingMetadata(false);
+        }
+      }
+    };
+    
+    extractMetadata();
+  }, [file]);
   
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
@@ -97,6 +133,7 @@ const Upload = () => {
     setFile(selectedFile);
     setFileName(selectedFile.name);
     setMetadataExtracted(false);
+    setOcrText('');
     
     // Create preview for image files
     if (selectedFile.type.startsWith('image/')) {
@@ -169,19 +206,37 @@ const Upload = () => {
       setLoading(true);
       setError(null);
       
+      // Create a copy of formData to ensure we don't modify the state directly
+      const processedFormData = { ...formData };
+      
+      // Ensure examType is in the correct format
+      const examTypeMap = {
+        'Mid_Semester': 'mid-semester',
+        'End_Semester': 'end-semester',
+        'Quiz': 'quiz'
+      };
+      
+      if (examTypeMap[processedFormData.examType]) {
+        processedFormData.examType = examTypeMap[processedFormData.examType];
+      }
+      
+      // Ensure subject is provided
+      if (!processedFormData.subject.trim()) {
+        if (processedFormData.courseCode) {
+          processedFormData.subject = processedFormData.courseCode;
+        } else {
+          processedFormData.subject = "Unknown Subject";
+        }
+      }
+      
       const paperFormData = new FormData();
       
       // Append file
       paperFormData.append('file', file);
       
-      // If it's a PDF and we want to extract metadata
-      if (file.type === 'application/pdf' && !metadataExtracted) {
-        setExtractingMetadata(true);
-      }
-      
-      // Append form data
-      Object.keys(formData).forEach(key => {
-        paperFormData.append(key, formData[key]);
+      // Append processed form data
+      Object.keys(processedFormData).forEach(key => {
+        paperFormData.append(key, processedFormData[key]);
       });
       
       // Append tags
@@ -189,23 +244,11 @@ const Upload = () => {
         paperFormData.append('tags', tags.join(','));
       }
       
+      console.log('Submitting with examType:', processedFormData.examType);
       const response = await uploadQuestionPaper(paperFormData);
       
       setSuccess(true);
       setLoading(false);
-      setExtractingMetadata(false);
-      
-      // If metadata was extracted, update the form
-      if (response.data.metadataExtracted) {
-        setMetadataExtracted(true);
-        setFormData(prevData => ({
-          ...prevData,
-          subject: response.data.subject || prevData.subject,
-          course: response.data.course || prevData.course,
-          examType: response.data.examType || prevData.examType,
-          year: response.data.year || prevData.year
-        }));
-      }
       
       // Refresh user data to update credit count
       await refreshUserData();
@@ -219,7 +262,6 @@ const Upload = () => {
       console.error('Upload error:', error);
       setError(error.error || 'Failed to upload question paper. Please try again.');
       setLoading(false);
-      setExtractingMetadata(false);
     }
   };
   
@@ -239,6 +281,25 @@ const Upload = () => {
             Back
           </Button>
         </Box>
+        
+        {/* Backdrop for metadata extraction */}
+        <Backdrop
+          sx={{ 
+            color: '#fff', 
+            zIndex: (theme) => theme.zIndex.drawer + 1,
+            flexDirection: 'column',
+            '& .MuiCircularProgress-root': {
+              marginBottom: 2
+            }
+          }}
+          open={extractingMetadata}
+        >
+          <CircularProgress color="inherit" />
+          <Typography variant="h6">Extracting metadata from PDF...</Typography>
+          <Typography variant="body2" sx={{ mt: 1, maxWidth: '60%', textAlign: 'center' }}>
+            This may take a few moments. We're using OCR to analyze the document.
+          </Typography>
+        </Backdrop>
         
         <Paper 
           elevation={3} 
@@ -288,6 +349,27 @@ const Upload = () => {
             >
               <Typography variant="subtitle2">
                 Question paper uploaded successfully! You have received 5 credits.
+              </Typography>
+            </Alert>
+          )}
+          
+          {metadataExtracted && (
+            <Alert 
+              severity="info" 
+              sx={{ 
+                mb: 4, 
+                borderRadius: 1,
+                bgcolor: alpha(theme.palette.success.main, 0.1),
+                color: theme.palette.success.dark,
+                '& .MuiAlert-icon': {
+                  color: theme.palette.success.main
+                }
+              }}
+              icon={<AutoAwesomeIcon />}
+            >
+              <Typography variant="subtitle2">
+                <strong>Metadata extracted successfully!</strong> We've pre-filled some fields for you.
+                Please review and correct if needed.
               </Typography>
             </Alert>
           )}
@@ -350,105 +432,74 @@ const Upload = () => {
                 </Box>
               </Grid>
               
-              {file && file.type === 'application/pdf' && (
-                <Grid item xs={12}>
-                  <Paper 
-                    elevation={0} 
-                    sx={{ 
-                      p: 2, 
-                      textAlign: 'center',
-                      backgroundColor: alpha(theme.palette.info.main, 0.05),
-                      borderRadius: 1,
-                      mb: 2,
-                      border: `1px solid ${alpha(theme.palette.info.main, 0.1)}`
-                    }}
-                  >
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: extractingMetadata 
-                          ? theme.palette.info.main
-                          : metadataExtracted 
-                            ? theme.palette.success.main
-                            : theme.palette.info.main
-                      }}
-                    >
-                      {extractingMetadata ? (
-                        <>
-                          <CircularProgress size={16} sx={{ mr: 1 }} />
-                          Extracting metadata from PDF...
-                        </>
-                      ) : metadataExtracted ? (
-                        <>
-                          <CheckCircleIcon fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
-                          Metadata extracted successfully!
-                        </>
-                      ) : (
-                        'Metadata will be extracted automatically from the PDF when you submit'
-                      )}
-                    </Typography>
-                  </Paper>
-                </Grid>
-              )}
-              
               <Grid item xs={12}>
                 <Divider sx={{ mb: 3, mt: 1 }}>
                   <Chip label="Paper Details" sx={{ fontWeight: 500 }} />
                 </Divider>
               </Grid>
               
-              <Grid item xs={12} sm={6}>
+              <Grid item xs={12}>
                 <TextField
-                  fullWidth
-                  label="Title"
                   name="title"
+                  label="Paper Title"
+                  fullWidth
+                  variant="outlined"
                   value={formData.title}
                   onChange={handleChange}
                   required
-                  variant="outlined"
-                  InputProps={{
-                    sx: { borderRadius: 1 }
+                  InputLabelProps={{
+                    shrink: true,
                   }}
                 />
               </Grid>
               
               <Grid item xs={12} sm={6}>
                 <TextField
-                  fullWidth
-                  label="Subject"
                   name="subject"
+                  label="Subject Name"
+                  fullWidth
+                  variant="outlined"
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  placeholder="e.g. Computer Science"
-                  variant="outlined"
-                  InputProps={{
-                    sx: { borderRadius: 1 }
+                  InputLabelProps={{
+                    shrink: true,
                   }}
                 />
               </Grid>
               
               <Grid item xs={12} sm={6}>
                 <TextField
-                  fullWidth
-                  label="Course"
                   name="course"
+                  label="Course Name"
+                  fullWidth
+                  variant="outlined"
                   value={formData.course}
                   onChange={handleChange}
                   required
-                  placeholder="e.g. CS101"
-                  variant="outlined"
-                  InputProps={{
-                    sx: { borderRadius: 1 }
+                  InputLabelProps={{
+                    shrink: true,
                   }}
                 />
               </Grid>
               
               <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
+                <TextField
+                  name="courseCode"
+                  label="Course Code"
+                  fullWidth
+                  variant="outlined"
+                  value={formData.courseCode}
+                  onChange={handleChange}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  helperText="Will be auto-extracted from PDF if possible"
+                />
+              </Grid>
+              
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth variant="outlined" required>
                   <InputLabel id="exam-type-label">Exam Type</InputLabel>
                   <Select
                     labelId="exam-type-label"
@@ -456,12 +507,10 @@ const Upload = () => {
                     value={formData.examType}
                     onChange={handleChange}
                     label="Exam Type"
-                    required
-                    sx={{ borderRadius: 1 }}
                   >
-                    {examTypes.map(type => (
-                      <MenuItem key={type.value} value={type.value}>
-                        {type.label}
+                    {examTypes.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
                       </MenuItem>
                     ))}
                   </Select>
@@ -469,7 +518,7 @@ const Upload = () => {
               </Grid>
               
               <Grid item xs={12} sm={6}>
-                <FormControl fullWidth>
+                <FormControl fullWidth variant="outlined" required>
                   <InputLabel id="year-label">Year</InputLabel>
                   <Select
                     labelId="year-label"
@@ -477,10 +526,8 @@ const Upload = () => {
                     value={formData.year}
                     onChange={handleChange}
                     label="Year"
-                    required
-                    sx={{ borderRadius: 1 }}
                   >
-                    {years.map(year => (
+                    {years.map((year) => (
                       <MenuItem key={year} value={year}>
                         {year}
                       </MenuItem>
@@ -595,6 +642,30 @@ const Upload = () => {
               </Grid>
             </Grid>
           </form>
+          
+          {/* Display OCR text if available */}
+          {ocrText && (
+            <Box mt={4}>
+              <Divider sx={{ mb: 2 }}>
+                <Chip label="Extracted OCR Text" />
+              </Divider>
+              <Paper 
+                elevation={0} 
+                sx={{ 
+                  p: 2, 
+                  maxHeight: '200px', 
+                  overflow: 'auto',
+                  bgcolor: alpha(theme.palette.info.main, 0.05),
+                  borderRadius: 1,
+                  fontSize: '0.8rem',
+                  whiteSpace: 'pre-wrap',
+                  wordBreak: 'break-word'
+                }}
+              >
+                {ocrText.length > 1000 ? ocrText.substring(0, 1000) + '...' : ocrText}
+              </Paper>
+            </Box>
+          )}
         </Paper>
       </Container>
     </Box>

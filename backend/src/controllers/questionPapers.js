@@ -2,7 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const QuestionPaper = require('../models/QuestionPaper');
 const User = require('../models/User');
-const { processPDF } = require('../utils/pdfParser');
+const { extractMetadataFromPDF } = require('../services/flaskApiService');
 
 // @desc    Upload a question paper
 // @route   POST /api/question-papers/upload
@@ -41,31 +41,64 @@ exports.uploadQuestionPaper = async (req, res) => {
 
     // Extract metadata from file if it's a PDF
     let metadata = {
+      courseCode: req.body.courseCode || '',
       subject: req.body.subject || '',
       course: req.body.course || '',
       examType: req.body.examType || 'other',
-      year: parseInt(req.body.year) || new Date().getFullYear()
+      year: parseInt(req.body.year) || new Date().getFullYear(),
+      semester: req.body.semester || 'winter',
+      examDate: null
     };
 
     // Add a flag to track if metadata was extracted
     let metadataExtracted = false;
 
-    // If PDF, try to extract metadata using AI
+    // If PDF, try to extract metadata using the Flask API
     if (fileExtension === '.pdf') {
       try {
-        console.log('Processing PDF for metadata extraction');
+        console.log('Processing PDF for metadata extraction via Flask API');
         
-        // Extract metadata from PDF
-        const extractedMetadata = await processPDF(file.path);
+        // Extract metadata from PDF using Flask API
+        const extractedMetadata = await extractMetadataFromPDF(file.path);
         
-        // Only use extracted metadata for fields that weren't provided by the user
-        if (!req.body.subject && extractedMetadata.subject) {
-          metadata.subject = extractedMetadata.subject;
-          metadataExtracted = true;
+        console.log('Extracted metadata from Flask API:', extractedMetadata);
+
+        // Validate required courseCode
+        if (!req.body.courseCode && !extractedMetadata.courseCode) {
+          return res.status(400).json({
+            success: false,
+            error: 'Course code is required'
+          });
         }
-        
-        if (!req.body.course && extractedMetadata.course) {
-          metadata.course = extractedMetadata.course;
+
+        // Extract exam date if available in OCR text
+        if (extractedMetadata.rawOcrText) {
+          const datePattern = /(?:date|dated|held on|conducted on)[:\s]*([\d]{1,2}[\/-][\d]{1,2}[\/-][\d]{2,4})/i;
+          const match = extractedMetadata.rawOcrText.match(datePattern);
+          if (match) {
+            const dateStr = match[1];
+            metadata.examDate = new Date(dateStr);
+          }
+        }
+
+        // Detect semester from OCR text
+        if (!req.body.semester && extractedMetadata.rawOcrText) {
+          const winterPattern = /winter semester|winter session/i;
+          const summerPattern = /summer semester|summer session/i;
+          const monsoonPattern = /monsoon semester|monsoon session/i;
+
+          if (winterPattern.test(extractedMetadata.rawOcrText)) {
+            metadata.semester = 'winter';
+          } else if (summerPattern.test(extractedMetadata.rawOcrText)) {
+            metadata.semester = 'summer';
+          } else if (monsoonPattern.test(extractedMetadata.rawOcrText)) {
+            metadata.semester = 'monsoon';
+          }
+        }
+
+        // Only use extracted metadata for fields that weren't provided by the user
+        if (extractedMetadata.courseCode && !req.body.courseCode) {
+          metadata.courseCode = extractedMetadata.courseCode;
           metadataExtracted = true;
         }
         
@@ -78,26 +111,46 @@ exports.uploadQuestionPaper = async (req, res) => {
           metadata.year = extractedMetadata.year;
           metadataExtracted = true;
         }
-        
+
         console.log('Final metadata after extraction:', metadata);
       } catch (error) {
-        console.error('Error processing PDF metadata:', error);
-        // Continue with user provided metadata
+        console.error('Error processing PDF metadata via Flask API:', error);
+        // Continue with user provided metadata if extraction fails
       }
     }
+
+    // Calculate academic year based on semester
+    const examYear = metadata.year;
+    metadata.academicYear = metadata.semester === 'monsoon' 
+      ? `${examYear}-${examYear + 1}`
+      : `${examYear - 1}-${examYear}`;
 
     // Ensure we have default values for required fields
     metadata.subject = metadata.subject || 'Unknown Subject';
     metadata.course = metadata.course || 'Unknown Course';
     metadata.year = metadata.year || new Date().getFullYear();
 
+    // Map exam type to correct format if needed
+    if (metadata.examType) {
+      const examTypeMap = {
+        'Mid_Semester': 'mid-semester',
+        'End_Semester': 'end-semester',
+        'Quiz': 'quiz'
+      };
+      metadata.examType = examTypeMap[metadata.examType] || metadata.examType;
+    }
+
     // Create a new question paper entry
     const questionPaper = await QuestionPaper.create({
       title: req.body.title || file.originalname,
       subject: metadata.subject,
       course: metadata.course,
+      courseCode: metadata.courseCode,
       examType: metadata.examType,
       year: metadata.year,
+      semester: metadata.semester,
+      academicYear: metadata.academicYear,
+      examDate: metadata.examDate,
       filePath: file.path,
       fileType: fileExtension.slice(1), // Remove the dot
       fileSize: file.size,
@@ -114,10 +167,14 @@ exports.uploadQuestionPaper = async (req, res) => {
       success: true,
       data: questionPaper,
       metadataExtracted,
+      courseCode: metadata.courseCode,
       subject: metadata.subject,
       course: metadata.course,
       examType: metadata.examType,
       year: metadata.year,
+      semester: metadata.semester,
+      academicYear: metadata.academicYear,
+      examDate: metadata.examDate,
       message: 'Question paper uploaded successfully'
     });
   } catch (error) {
@@ -366,4 +423,4 @@ exports.deleteQuestionPaper = async (req, res) => {
       error: 'Failed to delete question paper'
     });
   }
-}; 
+};

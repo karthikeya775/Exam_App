@@ -1,0 +1,30 @@
+{
+  "name": "exam-paper-repository",
+  "version": "1.0.0",
+  "description": "Exam Paper Repository application with React frontend, Node.js backend, and Flask API for OCR",
+  "main": "start-servers.js",
+  "scripts": {
+    "setup": "concurrently \"cd backend && npm install\" \"cd frontend && npm install\"",
+    "setup:flask": "cd backend && npm run setup:flask",
+    "start:all": "node start-servers.js",
+    "start:backend": "cd backend && npm run dev",
+    "start:flask": "cd backend && npm run start:flask",
+    "start:frontend": "cd frontend && npm run dev",
+    "dev:be+flask": "cd backend && npm run dev:all",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "exam",
+    "paper",
+    "repository",
+    "ocr",
+    "flask",
+    "node",
+    "react"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+} 

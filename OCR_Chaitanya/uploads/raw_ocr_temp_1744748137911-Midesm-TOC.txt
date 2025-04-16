@@ -1,0 +1,22 @@
+Indian Institute of Technology (ISM), Dhanbad
+Department of Computer Science and Engineering
+Theory of Computation (CSC208)
+
+Mid Semester, Date: 25 February 2024
+
+’
+
+Timing: 2PM-4PM . Winter Semester 2023-24 Max mark: 60
+Attempt all questions. Write full justifications for your answers to be evaluated.
+1. Consider the following language over the alphabet. © = {0, 1}
+L= {w € d*|w starts with 10 but does not end with 10}
+
+(a) Write a regular expression for L (5)
+(b) Design a DFA for L (7)
+
+hequnaie expr on
+
+lol t+loo to (i+0)* Cutol+ oo)
+
+= 12 ( Lt Ot (tt0)* (tort 00))
+

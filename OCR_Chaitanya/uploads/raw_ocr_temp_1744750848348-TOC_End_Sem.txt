@@ -1,0 +1,61 @@
+ss fr Indian Institute of Technology (ISM). Dhgribad,
+\ aX . Department of Computer Science and Erigineering £
+a4 ‘ee Theory of Computation (CSC208) aa
+es * & or a End Semes:cr. Date: 12 May 2023 cs von
+iming: 3 PMI - 6PM Winter Seme<ter 2022-23 Max mark: 100 t * i
+“ i at ae \ —_—
+fee all questions. Write full justifications for your answers to be evaluated: \
+rite your Proofs,constructions in mathematically precise language- Unclear. \ \
+Pa incomplete. and/or dubious statements would be severely penalized. \ pe
+A. Consider the following context-free grammar to generate arithmetic expressions in
+one variable a. involving addition and multiplication operations only. Here. E is the fe i
+Pa start symbol. . a> y ™
+Pa &% B53 ate \ fg. &
+cS {x SE+E|/E-E\e¢ qe
+& De all the parse trees for the string a +(e ~<a)} a)following this grammar. 6) :
+an i. e) repos a unambiguous grammar that ensures that the precedence of the *" uO
+& i sioed +" is maintained and operations are evaluated from left to right. Using ra fx E
+NX ae ee draw the parse tree for che expression string in Part (a) of this —
+question. NOTE: Incorporation of any additional symbol or produc-  * pain
+tion in the grammar will induce a heavy penalty. Ver
+: ~ + 4
+oe (a) State the pumping lemma for context-free languages. (4)* ©
+Ea aly} — ; 3 =
+et | {b) Use the pumping lemma stated above to show that the language E = {a*b*c[n >
+7 0} is not context-free. 5 : ; (©
+E a Sa Consider the following context-free grammar Gin Chomsky normal form. (10)
+va NS co ETE IT =
+wi is A = BAla 7 3
+Ce ae eee B — CC|b ran
+a : = 1 C = ABla at RK
+T xe a
+_Use' the CYK Algorithm to test the membership of the string ‘baaba’ in the lan-
+wf “guage of the given grammar G. Clearly show the working steps. Note: Use of any 7 tee A
+at al Tothepeeprogch for testing the membership will induce zero marks.
+# bs T>ET/EXE
+4 Consider the tolléwing language over © = {a,b,c}: ane:
+—_— A)
+-—s z - ~
+‘ ‘ L, = {a'(bc) |i. j > 0 and i > 7} e
+ay < ea” ToS _ ~—
+NE (a) Design a Pushdown Automata (PDA) M = (Q,5,T.6.s,4. F) to accept oor h C ha
+} / ++—— 4f must contain at most iwo states. Clearly define the components of the PDA. ; ay
+3 Drgwithe transition diagram. Mention clearly whether your machine Vf accepts a oi
+(7) :
+
+a PDA? Explain
+
+XEs bx finel state or empty stack.
+Bs ~What*do you mean by the instantaneous description of
+
+a “vith relevant mathematical notations. 254
+o wy . Pie! P.T.O.
+4 am “anf Hur -\ u % = ’ grat
+wo owls? ‘ Ae acs it ca OT ade hae,
+
+Lae / = a 4
+us >) « an eo 4 “
+a: “Ef . “KS og pee
+2, Oa ot ae ree
+
+Bo” i Vw 1k bbs re > So

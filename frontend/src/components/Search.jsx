@@ -24,7 +24,10 @@ import {
   useTheme,
   alpha,
   IconButton,
-  Tooltip
+  Tooltip,
+  Checkbox,
+  FormControlLabel,
+  FormGroup
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -37,7 +40,8 @@ import {
   CalendarToday as CalendarIcon,
   School as SchoolIcon,
   Category as CategoryIcon,
-  ArrowForwardIos as ArrowIcon
+  ArrowForwardIos as ArrowIcon,
+  Info as InfoIcon
 } from '@mui/icons-material';
 import { getQuestionPapers, downloadQuestionPaper, searchQuestionPapers } from '../services/questionPaperService';
 
@@ -58,6 +62,15 @@ const years = [
   }))
 ];
 
+const initialFilters = {
+  subjects: [],
+  courses: [],
+  courseCodes: [], // Added courseCode to filters
+  examTypes: [],
+  years: [],
+  tags: []
+};
+
 const Search = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,6 +81,7 @@ const Search = () => {
   const [examType, setExamType] = useState(queryParams.get('examType') || '');
   const [year, setYear] = useState(queryParams.get('year') || '');
   const [subject, setSubject] = useState(queryParams.get('subject') || '');
+  const [courseCode, setCourseCode] = useState(queryParams.get('courseCode') || ''); // Added courseCode state
   
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,8 +89,75 @@ const Search = () => {
   const [page, setPage] = useState(parseInt(queryParams.get('page') || '1', 10));
   const [totalPages, setTotalPages] = useState(1);
   
+  // Available filter options
+  const [availableFilters, setAvailableFilters] = useState({
+    subjects: [],
+    courses: [],
+    courseCodes: [], // Added courseCode to available filters
+    examTypes: [],
+    years: [],
+    tags: []
+  });
+  
+  // Active filters
+  const [activeFilters, setActiveFilters] = useState(initialFilters);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  
   // Notification message state
   const [notification, setNotification] = useState(location.state?.notification || null);
+  
+  // Load available filter options on component mount
+  useEffect(() => {
+    const loadDistinctValues = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch all papers to extract distinct values
+        const response = await getQuestionPapers({
+          limit: 500, // Get a large enough sample to extract all values
+          select: 'subject,course,courseCode,examType,year,tags'
+        });
+        
+        // Extract unique values using Set
+        const subjects = [...new Set(response.data.map(paper => paper.subject))].filter(Boolean);
+        const courses = [...new Set(response.data.map(paper => paper.course))].filter(Boolean);
+        const courseCodes = [...new Set(response.data.map(paper => paper.courseCode))].filter(Boolean);
+        const years = [...new Set(response.data.map(paper => paper.year))].filter(Boolean);
+        
+        // Flatten and extract unique tags
+        const allTags = response.data.flatMap(paper => paper.tags).filter(Boolean);
+        const tags = [...new Set(allTags)];
+        
+        // Extract unique exam types
+        const examTypes = [...new Set(response.data.map(paper => paper.examType))].filter(Boolean);
+        
+        // Sort values
+        subjects.sort();
+        courses.sort();
+        courseCodes.sort();
+        years.sort((a, b) => b - a); // Sort years in descending order
+        tags.sort();
+        
+        // Set the available filter options
+        setAvailableFilters({
+          subjects,
+          courses,
+          courseCodes,
+          examTypes,
+          years,
+          tags
+        });
+        
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading filter values:', error);
+        setError(error?.error || 'Failed to load filter options');
+        setLoading(false);
+      }
+    };
+    
+    loadDistinctValues();
+  }, []);
   
   // Clear notification after 5 seconds
   useEffect(() => {
@@ -98,6 +179,7 @@ const Search = () => {
     if (examType) params.append('examType', examType);
     if (year) params.append('year', year);
     if (subject) params.append('subject', subject);
+    if (courseCode) params.append('courseCode', courseCode); // Added courseCode to URL params
     if (page > 1) params.append('page', page.toString());
     
     navigate({
@@ -107,7 +189,7 @@ const Search = () => {
     
     // Fetch papers based on search params
     fetchPapers();
-  }, [examType, year, subject, page]);
+  }, [examType, year, subject, courseCode, page]);
   
   const fetchPapers = async () => {
     try {
@@ -122,6 +204,7 @@ const Search = () => {
       if (examType) params.examType = examType;
       if (year) params.year = year;
       if (subject) params.subject = subject;
+      if (courseCode) params.courseCode = courseCode; // Added courseCode to query params
       
       let result;
       
@@ -164,6 +247,30 @@ const Search = () => {
     setPage(value);
   };
   
+  const clearFilters = () => {
+    setSearchTerm('');
+    setExamType('');
+    setYear('');
+    setSubject('');
+    setCourseCode('');
+    setPage(1);
+    setActiveFilters(initialFilters);
+  };
+  
+  const handleFilterChange = (filterType, value, checked) => {
+    setActiveFilters(prev => {
+      const newFilters = { ...prev };
+      
+      if (checked) {
+        newFilters[filterType] = [...newFilters[filterType], value];
+      } else {
+        newFilters[filterType] = newFilters[filterType].filter(item => item !== value);
+      }
+      
+      return newFilters;
+    });
+  };
+  
   const getFileIcon = (fileType) => {
     switch(fileType) {
       case 'pdf':
@@ -196,686 +303,545 @@ const Search = () => {
     }
   };
   
-  const clearFilters = () => {
-    setSearchTerm('');
-    setExamType('');
-    setYear('');
-    setSubject('');
-    setPage(1);
-  };
-  
   return (
-    <Box sx={{ 
-      minHeight: '100vh',
-      background: 'linear-gradient(120deg, #f5f7fa 0%, #e8edf5 100%)',
-      py: { xs: 3, md: 5 }
-    }}>
-      <Container maxWidth="lg">
-        {/* Display notification if present */}
+    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', py: 4 }}>
+      <Container>
+        {/* Search Header */}
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: 3, 
+            mb: 4, 
+            borderRadius: 2,
+            background: theme.palette.mode === 'dark' 
+              ? 'linear-gradient(45deg, #1a237e 0%, #311b92 100%)' 
+              : 'linear-gradient(45deg, #3949ab 0%, #5e35b1 100%)',
+            color: 'white'
+          }}
+        >
+          <Typography 
+            variant="h4" 
+            gutterBottom 
+            sx={{ 
+              fontWeight: 700,
+              textShadow: '1px 1px 2px rgba(0,0,0,0.3)'
+            }}
+          >
+            Search Question Papers
+          </Typography>
+          <Typography variant="body1" sx={{ mb: 3, opacity: 0.9 }}>
+            Find question papers by subject, course, course code, exam type, and year.
+          </Typography>
+          
+          <form onSubmit={handleSearch}>
+            <Grid container spacing={2}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  placeholder="Search by keywords, subject, or course..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  variant="outlined"
+                  sx={{
+                    bgcolor: alpha('#fff', 0.15),
+                    borderRadius: 1,
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: 'white',
+                      },
+                      '& fieldset': {
+                        borderColor: alpha('#fff', 0.5),
+                      },
+                    },
+                    '& .MuiInputBase-input': {
+                      color: 'white',
+                      '&::placeholder': {
+                        color: alpha('#fff', 0.7),
+                        opacity: 1,
+                      },
+                    },
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: 'white' }} />
+                      </InputAdornment>
+                    ),
+                    endAdornment: searchTerm && (
+                      <InputAdornment position="end">
+                        <IconButton 
+                          edge="end" 
+                          onClick={() => setSearchTerm('')}
+                          sx={{ color: 'white' }}
+                        >
+                          <ClearIcon />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              
+              <Grid item xs={6} md={2}>
+                <FormControl fullWidth variant="outlined" sx={{ bgcolor: alpha('#fff', 0.15), borderRadius: 1 }}>
+                  <InputLabel sx={{ color: 'white' }}>Exam Type</InputLabel>
+                  <Select
+                    value={examType}
+                    onChange={(e) => setExamType(e.target.value)}
+                    label="Exam Type"
+                    sx={{
+                      color: 'white',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: alpha('#fff', 0.5),
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'white',
+                      },
+                      '& .MuiSvgIcon-root': {
+                        color: 'white',
+                      },
+                    }}
+                  >
+                    {examTypes.map((type) => (
+                      <MenuItem key={type.value} value={type.value}>
+                        {type.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={6} md={2}>
+                <FormControl fullWidth variant="outlined" sx={{ bgcolor: alpha('#fff', 0.15), borderRadius: 1 }}>
+                  <InputLabel sx={{ color: 'white' }}>Year</InputLabel>
+                  <Select
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    label="Year"
+                    sx={{
+                      color: 'white',
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: alpha('#fff', 0.5),
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: 'white',
+                      },
+                      '& .MuiSvgIcon-root': {
+                        color: 'white',
+                      },
+                    }}
+                  >
+                    {years.map((y) => (
+                      <MenuItem key={y.value} value={y.value}>
+                        {y.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+              
+              <Grid item xs={12} md={2}>
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  sx={{
+                    py: 1.8,
+                    bgcolor: 'white',
+                    color: '#5e35b1',
+                    '&:hover': {
+                      bgcolor: alpha('#fff', 0.9),
+                    },
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    height: '100%'
+                  }}
+                >
+                  Search
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+          
+          {/* Additional Filters */}
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {/* Course Code Filter */}
+              <TextField
+                placeholder="Course Code"
+                value={courseCode}
+                onChange={(e) => setCourseCode(e.target.value)}
+                variant="outlined"
+                size="small"
+                sx={{
+                  bgcolor: alpha('#fff', 0.15),
+                  borderRadius: 1,
+                  width: 140,
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'white',
+                    },
+                    '& fieldset': {
+                      borderColor: alpha('#fff', 0.5),
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'white',
+                    '&::placeholder': {
+                      color: alpha('#fff', 0.7),
+                      opacity: 1,
+                    },
+                  },
+                }}
+              />
+              
+              {/* Subject Filter */}
+              <TextField
+                placeholder="Subject"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                variant="outlined"
+                size="small"
+                sx={{
+                  bgcolor: alpha('#fff', 0.15),
+                  borderRadius: 1,
+                  width: 140,
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: 'white',
+                    },
+                    '& fieldset': {
+                      borderColor: alpha('#fff', 0.5),
+                    },
+                  },
+                  '& .MuiInputBase-input': {
+                    color: 'white',
+                    '&::placeholder': {
+                      color: alpha('#fff', 0.7),
+                      opacity: 1,
+                    },
+                  },
+                }}
+              />
+            </Box>
+            
+            <Button 
+              variant="text" 
+              onClick={clearFilters}
+              sx={{ 
+                color: 'white',
+                opacity: 0.9,
+                '&:hover': {
+                  opacity: 1,
+                  bgcolor: alpha('#fff', 0.1),
+                },
+                fontSize: '0.85rem'
+              }}
+              startIcon={<ClearIcon />}
+            >
+              Clear Filters
+            </Button>
+          </Box>
+        </Paper>
+        
+        {/* Notification */}
         {notification && (
           <Alert 
             severity="success" 
-            sx={{ 
-              mb: 3,
-              borderRadius: 2,
-              boxShadow: '0 2px 10px rgba(0,0,0,0.08)'
-            }}
+            sx={{ mb: 3, borderRadius: 1 }}
             onClose={() => setNotification(null)}
           >
             {notification}
           </Alert>
         )}
         
-        {/* Header Section */}
-        <Box sx={{ 
-          textAlign: 'center', 
-          mb: { xs: 3, md: 5 } 
-        }}>
-          <Typography 
-            variant="h4" 
-            component="h1" 
-            sx={{ 
-              fontWeight: 700, 
-              color: '#1a237e',
-              mb: 2,
-              fontSize: { xs: '1.75rem', md: '2.5rem' }
-            }}
-          >
-            Question Paper Repository
-          </Typography>
-          <Typography 
-            variant="subtitle1" 
-            sx={{ 
-              color: '#546e7a', 
-              maxWidth: 700, 
-              mx: 'auto',
-              lineHeight: 1.6
-            }}
-          >
-            Search through our extensive collection of past exam papers to help with your exam preparation.
-          </Typography>
-        </Box>
-        
-        {/* Search Form */}
-        <Paper 
-          elevation={0} 
-          sx={{ 
-            borderRadius: 4,
-            overflow: 'hidden',
-            mb: 4,
-            boxShadow: '0 6px 20px rgba(0,0,0,0.08)',
-            background: 'white'
-          }}
-        >
-          {/* Search Header */}
-          <Box sx={{ 
-            p: { xs: 2, md: 3 },
-            background: 'linear-gradient(120deg, #3949ab 0%, #1e88e5 100%)',
-            color: 'white'
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <SearchIcon />
-              <Typography variant="h6" fontWeight="500">
-                Search Question Papers
-              </Typography>
-            </Box>
-          </Box>
-          
-          {/* Search Form Content */}
-          <Box sx={{ p: { xs: 2, md: 3 } }}>
-            <form onSubmit={handleSearch}>
-              <Grid container spacing={3}>
-                {/* Search Field */}
-                <Grid item xs={12} md={12}>
-                  <TextField
-                    fullWidth
-                    placeholder="Search by title, subject, or keywords..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    variant="outlined"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon color="primary" />
-                        </InputAdornment>
-                      ),
-                      endAdornment: searchTerm && (
-                        <InputAdornment position="end">
-                          <IconButton size="small" onClick={() => setSearchTerm('')}>
-                            <ClearIcon fontSize="small" />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                      sx: { 
-                        height: 54,
-                        borderRadius: 2
-                      }
-                    }}
-                  />
-                </Grid>
-                
-                {/* Filters Row */}
-                <Grid item xs={12}>
-                  <Grid container spacing={2}>
-                    {/* Exam Type Dropdown */}
-                    <Grid item xs={12} sm={6} md={4}>
-                      <FormControl fullWidth variant="outlined">
-                        <InputLabel id="exam-type-label">Exam Type</InputLabel>
-                        <Select
-                          labelId="exam-type-label"
-                          value={examType}
-                          onChange={(e) => setExamType(e.target.value)}
-                          label="Exam Type"
-                          sx={{ 
-                            height: 54,
-                            borderRadius: 2
-                          }}
-                          startAdornment={
-                            <CategoryIcon 
-                              sx={{ 
-                                mr: 1,
-                                color: '#7986cb'
-                              }} 
-                            />
-                          }
-                        >
-                          {examTypes.map(type => (
-                            <MenuItem key={type.value} value={type.value}>
-                              {type.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    
-                    {/* Year Dropdown */}
-                    <Grid item xs={12} sm={6} md={4}>
-                      <FormControl fullWidth variant="outlined">
-                        <InputLabel id="year-label">Year</InputLabel>
-                        <Select
-                          labelId="year-label"
-                          value={year}
-                          onChange={(e) => setYear(e.target.value)}
-                          label="Year"
-                          sx={{ 
-                            height: 54,
-                            borderRadius: 2
-                          }}
-                          startAdornment={
-                            <CalendarIcon 
-                              sx={{ 
-                                mr: 1,
-                                color: '#7986cb'
-                              }} 
-                            />
-                          }
-                        >
-                          {years.map(y => (
-                            <MenuItem key={y.value} value={y.value}>
-                              {y.label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    
-                    {/* Subject Input */}
-                    <Grid item xs={12} md={4}>
-                      <TextField
-                        fullWidth
-                        label="Subject"
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                        variant="outlined"
-                        placeholder="e.g. Mathematics"
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <SchoolIcon sx={{ color: '#7986cb' }} />
-                            </InputAdornment>
-                          ),
-                          sx: { 
-                            height: 54,
-                            borderRadius: 2
-                          }
-                        }}
-                      />
-                    </Grid>
-                  </Grid>
-                </Grid>
-                
-                {/* Buttons Row */}
-                <Grid item xs={12}>
-                  <Box sx={{ 
-                    display: 'flex', 
-                    gap: 2,
-                    justifyContent: { xs: 'center', sm: 'flex-end' }
-                  }}>
-                    {(searchTerm || examType || year || subject) && (
-                      <Button
-                        variant="outlined"
-                        onClick={clearFilters}
-                        startIcon={<ClearIcon />}
-                        sx={{ 
-                          borderRadius: 2,
-                          px: 3,
-                          height: 44,
-                          fontWeight: 500
-                        }}
-                      >
-                        Clear Filters
-                      </Button>
-                    )}
-                    
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      color="primary"
-                      startIcon={<SearchIcon />}
-                      sx={{ 
-                        borderRadius: 2,
-                        px: 4,
-                        height: 44,
-                        bgcolor: '#3949ab',
-                        fontWeight: 500,
-                        boxShadow: '0 4px 12px rgba(57, 73, 171, 0.3)',
-                        '&:hover': {
-                          bgcolor: '#303f9f'
-                        }
-                      }}
-                    >
-                      Search
-                    </Button>
-                  </Box>
-                </Grid>
-              </Grid>
-            </form>
-          </Box>
-        </Paper>
-        
-        {/* Active Filters */}
-        {(searchTerm || examType || year || subject) && (
-          <Box sx={{ 
-            mb: 3,
-            p: 2,
-            borderRadius: 3,
-            background: 'rgba(255, 255, 255, 0.7)',
-            backdropFilter: 'blur(8px)',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            gap: 1.5
-          }}>
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 1, 
-              color: '#3949ab',
-              mr: 1
-            }}>
-              <FilterIcon fontSize="small" />
-              <Typography variant="body2" fontWeight={600}>
-                Active Filters:
-              </Typography>
-            </Box>
-            
-            {searchTerm && (
-              <Chip
-                label={searchTerm}
-                onDelete={() => setSearchTerm('')}
-                size="small"
-                sx={{ 
-                  bgcolor: '#3949ab',
-                  color: 'white',
-                  fontWeight: 500,
-                  borderRadius: '16px',
-                  '& .MuiChip-deleteIcon': {
-                    color: 'white'
-                  }
-                }}
-              />
-            )}
-            
-            {examType && (
-              <Chip
-                label={examTypes.find(t => t.value === examType)?.label}
-                onDelete={() => setExamType('')}
-                size="small"
-                sx={{ 
-                  bgcolor: '#5c6bc0',
-                  color: 'white',
-                  fontWeight: 500,
-                  borderRadius: '16px',
-                  '& .MuiChip-deleteIcon': {
-                    color: 'white'
-                  }
-                }}
-              />
-            )}
-            
-            {year && (
-              <Chip
-                label={`Year: ${year}`}
-                onDelete={() => setYear('')}
-                size="small"
-                sx={{ 
-                  bgcolor: '#7986cb',
-                  color: 'white',
-                  fontWeight: 500,
-                  borderRadius: '16px',
-                  '& .MuiChip-deleteIcon': {
-                    color: 'white'
-                  }
-                }}
-              />
-            )}
-            
-            {subject && (
-              <Chip
-                label={`Subject: ${subject}`}
-                onDelete={() => setSubject('')}
-                size="small"
-                sx={{ 
-                  bgcolor: '#9fa8da',
-                  color: 'white',
-                  fontWeight: 500,
-                  borderRadius: '16px',
-                  '& .MuiChip-deleteIcon': {
-                    color: 'white'
-                  }
-                }}
-              />
-            )}
-          </Box>
-        )}
-        
-        {/* Error Message */}
+        {/* Error Alert */}
         {error && (
           <Alert 
             severity="error" 
-            variant="filled"
-            sx={{ 
-              mb: 3, 
-              borderRadius: 2 
-            }}
+            sx={{ mb: 3, borderRadius: 1 }}
+            onClose={() => setError(null)}
           >
             {error}
           </Alert>
         )}
         
         {/* Results Section */}
-        {loading ? (
-          // Loading State
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
-            p: 6 
-          }}>
-            <CircularProgress size={50} sx={{ color: '#3949ab', mb: 3 }} />
-            <Typography variant="h6" color="#3949ab" fontWeight={500}>
-              Searching for papers...
+        <Paper sx={{ p: 3, borderRadius: 2 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              {loading ? 'Loading Results...' : `Found ${papers.length} Question Papers`}
             </Typography>
-          </Box>
-        ) : (
-          <>
-            {/* Results Header */}
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'center', 
-              mb: 3,
-              flexWrap: 'wrap',
-              gap: 2
-            }}>
-              <Typography variant="h6" sx={{ color: '#1a237e', fontWeight: 600 }}>
-                {papers.length > 0 
-                  ? `Found ${papers.length} question papers`
-                  : 'No question papers found'}
-              </Typography>
-              
-              {totalPages > 1 && (
-                <Pagination 
-                  count={totalPages} 
-                  page={page} 
-                  onChange={handlePageChange} 
-                  color="primary" 
-                  shape="rounded"
-                  sx={{
-                    '& .MuiPaginationItem-root': {
-                      fontWeight: 500
-                    }
-                  }}
-                />
-              )}
-            </Box>
             
-            {/* Results Grid */}
-            <Grid container spacing={3}>
-              {papers.map((paper) => (
-                <Grid item xs={12} sm={6} md={4} key={paper._id}>
-                  <Card 
-                    sx={{ 
-                      height: 320, // Set fixed card height
-                      display: 'flex',
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              {/* Active Filters */}
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {searchTerm && (
+                  <Chip 
+                    label={`Search: ${searchTerm}`} 
+                    onDelete={() => setSearchTerm('')}
+                    size="small"
+                    sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}
+                  />
+                )}
+                
+                {examType && (
+                  <Chip 
+                    label={`Exam: ${examType}`} 
+                    onDelete={() => setExamType('')}
+                    size="small"
+                    sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.1) }}
+                  />
+                )}
+                
+                {year && (
+                  <Chip 
+                    label={`Year: ${year}`} 
+                    onDelete={() => setYear('')}
+                    size="small"
+                    sx={{ bgcolor: alpha(theme.palette.info.main, 0.1) }}
+                  />
+                )}
+                
+                {subject && (
+                  <Chip 
+                    label={`Subject: ${subject}`} 
+                    onDelete={() => setSubject('')}
+                    size="small"
+                    sx={{ bgcolor: alpha(theme.palette.success.main, 0.1) }}
+                  />
+                )}
+                
+                {courseCode && (
+                  <Chip 
+                    label={`Code: ${courseCode}`} 
+                    onDelete={() => setCourseCode('')}
+                    size="small"
+                    sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1) }}
+                  />
+                )}
+              </Box>
+            </Box>
+          </Box>
+          
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+              <CircularProgress />
+            </Box>
+          ) : papers.length === 0 ? (
+            <Box sx={{ 
+              textAlign: 'center', 
+              py: 6,
+              px: 2,
+              bgcolor: alpha(theme.palette.info.main, 0.05),
+              borderRadius: 2
+            }}>
+              <Typography variant="h6" color="textSecondary" gutterBottom>
+                No question papers found
+              </Typography>
+              <Typography variant="body2" color="textSecondary" sx={{ mb: 3 }}>
+                Try adjusting your search or filters to find what you're looking for.
+              </Typography>
+              <Button 
+                variant="outlined" 
+                onClick={clearFilters}
+                startIcon={<ClearIcon />}
+              >
+                Clear All Filters
+              </Button>
+            </Box>
+          ) : (
+            <>
+              <Grid container spacing={3}>
+                {papers.map((paper) => (
+                  <Grid item xs={12} sm={6} md={4} key={paper._id}>
+                    <Card sx={{ 
+                      height: '100%', 
+                      display: 'flex', 
                       flexDirection: 'column',
-                      borderRadius: 3,
-                      overflow: 'hidden',
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.07)',
-                      transition: 'all 0.3s ease',
+                      transition: 'transform 0.2s, box-shadow 0.2s',
                       '&:hover': {
                         transform: 'translateY(-5px)',
-                        boxShadow: '0 10px 25px rgba(0,0,0,0.12)'
-                      }
-                    }}
-                  >
-                    {/* Card Header - Fixed height */}
-                    <Box sx={{ 
-                      p: 2, 
-                      height: 70, // Fixed header height
-                      background: `linear-gradient(to right, ${alpha(getFileColor(paper.fileType), 0.8)}, ${alpha(getFileColor(paper.fileType), 0.6)})`,
-                      color: 'white',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1.5
+                        boxShadow: 4
+                      },
+                      borderRadius: 2,
+                      overflow: 'hidden'
                     }}>
                       <Box sx={{ 
-                        width: 36, 
-                        height: 36, 
-                        borderRadius: '50%', 
-                        bgcolor: 'rgba(255,255,255,0.2)',
-                        display: 'flex',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        flexShrink: 0
+                        p: 2, 
+                        bgcolor: alpha(getFileColor(paper.fileType), 0.1),
+                        borderBottom: `1px solid ${alpha(getFileColor(paper.fileType), 0.2)}`
                       }}>
-                        {getFileIcon(paper.fileType)}
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Box sx={{ 
+                            mr: 1.5,
+                            color: getFileColor(paper.fileType),
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}>
+                            {getFileIcon(paper.fileType)}
+                          </Box>
+                          <Typography 
+                            variant="subtitle2" 
+                            sx={{ 
+                              textTransform: 'uppercase',
+                              letterSpacing: 0.5,
+                              fontWeight: 600,
+                              color: getFileColor(paper.fileType)
+                            }}
+                          >
+                            {paper.fileType.toUpperCase()}
+                          </Typography>
+                        </Box>
                       </Box>
-                      <Box>
-                        <Typography variant="caption" sx={{ opacity: 0.8, textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                          {paper.fileType} document
-                        </Typography>
-                        <Typography variant="body2" fontWeight={600}>
-                          {paper.examType.replace('-', ' ')}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    
-                    {/* Card Content - Fixed height */}
-                    <CardContent sx={{ 
-                      p: 2.5, 
-                      flexGrow: 1,
-                      height: 170, // Set fixed content height
-                      position: 'relative', // For absolute positioning of content
-                      overflow: 'hidden', // Hide overflow content
-                    }}>
-                      {/* Title - Absolute positioning for scrollable area */}
-                      <Box 
-                        sx={{ 
-                          height: 90, // Fixed title container height
-                          overflow: 'auto', // Enable scrolling for long titles
-                          mb: 2,
-                          paddingRight: 1, // Add some padding for scroll
-                          '&::-webkit-scrollbar': {
-                            width: '4px',
-                          },
-                          '&::-webkit-scrollbar-thumb': {
-                            backgroundColor: 'rgba(0,0,0,0.1)',
-                            borderRadius: 4,
-                          }
-                        }}
-                      >
+                      
+                      <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
                         <Typography 
-                          variant="subtitle1" 
+                          variant="h6" 
                           component="h2" 
                           sx={{ 
+                            mb: 1,
                             fontWeight: 600,
-                            lineHeight: 1.4,
-                            color: '#263238',
-                            cursor: 'pointer',
-                            '&:hover': { color: '#3949ab' }
+                            fontSize: '1.1rem',
+                            lineHeight: 1.3
                           }}
-                          onClick={() => navigate(`/papers/${paper._id}`)}
                         >
                           {paper.title}
                         </Typography>
-                      </Box>
-                      
-                      {/* Metadata at the bottom of content area */}
-                      <Box sx={{ 
-                        position: 'absolute',
-                        bottom: 20,
-                        left: 20,
-                        right: 20
-                      }}>
-                        <Box sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'space-between',
-                          mb: 1
-                        }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, maxWidth: '60%' }}>
-                            <SchoolIcon fontSize="small" sx={{ color: '#3949ab', opacity: 0.7, flexShrink: 0 }} />
-                            <Typography 
-                              variant="body2" 
-                              color="text.secondary" 
-                              sx={{ 
-                                fontWeight: 500,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {paper.subject}
-                            </Typography>
-                          </Box>
-                          
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <CalendarIcon fontSize="small" sx={{ color: '#3949ab', opacity: 0.7, flexShrink: 0 }} />
-                            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                              {paper.year}
-                            </Typography>
-                          </Box>
-                        </Box>
                         
-                        {paper.course && (
+                        <Box sx={{ mb: 2 }}>
                           <Typography 
-                            variant="caption" 
-                            color="text.secondary" 
+                            variant="body2" 
+                            color="textSecondary" 
                             sx={{ 
-                              display: 'block',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
+                              display: 'flex',
+                              alignItems: 'center',
+                              mb: 0.5,
+                              fontSize: '0.875rem'
                             }}
                           >
-                            Course: {paper.course}
+                            <SchoolIcon fontSize="small" sx={{ mr: 1, color: theme.palette.primary.main, opacity: 0.7 }} />
+                            {paper.subject}
                           </Typography>
-                        )}
-                      </Box>
-                    </CardContent>
-                    
-                    {/* Card Actions - Fixed height */}
-                    <Divider />
-                    <CardActions sx={{ 
-                      p: 2, 
-                      justifyContent: 'space-between',
-                      height: 60,
-                      bgcolor: 'rgba(0,0,0,0.01)'
-                    }}>
-                      <Button
-                        size="small"
-                        onClick={() => navigate(`/papers/${paper._id}`)}
-                        endIcon={<ArrowIcon fontSize="small" />}
-                        sx={{ 
-                          color: '#3949ab',
-                          fontWeight: 600
-                        }}
-                      >
-                        Details
-                      </Button>
+                          
+                          {paper.courseCode && (
+                            <Typography 
+                              variant="body2" 
+                              color="textSecondary" 
+                              sx={{ 
+                                display: 'flex',
+                                alignItems: 'center',
+                                mb: 0.5,
+                                fontSize: '0.875rem'
+                              }}
+                            >
+                              <CategoryIcon fontSize="small" sx={{ mr: 1, color: theme.palette.secondary.main, opacity: 0.7 }} />
+                              {paper.courseCode}
+                            </Typography>
+                          )}
+                          
+                          <Typography 
+                            variant="body2" 
+                            color="textSecondary" 
+                            sx={{ 
+                              display: 'flex',
+                              alignItems: 'center',
+                              fontSize: '0.875rem'
+                            }}
+                          >
+                            <CalendarIcon fontSize="small" sx={{ mr: 1, color: theme.palette.info.main, opacity: 0.7 }} />
+                            {paper.examType.replace('-', ' ')} {paper.year}
+                          </Typography>
+                        </Box>
+                        
+                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 2 }}>
+                          <Chip 
+                            label={paper.fileType.toUpperCase()} 
+                            size="small"
+                            sx={{ 
+                              bgcolor: alpha(getFileColor(paper.fileType), 0.1),
+                              color: getFileColor(paper.fileType),
+                              fontWeight: 500,
+                              borderRadius: 1
+                            }}
+                          />
+                          <Chip 
+                            label={paper.examType.replace('-', ' ')} 
+                            size="small"
+                            sx={{ 
+                              bgcolor: alpha(theme.palette.info.main, 0.1),
+                              color: theme.palette.info.main,
+                              fontWeight: 500,
+                              borderRadius: 1
+                            }}
+                          />
+                          <Chip 
+                            label={paper.year} 
+                            size="small"
+                            sx={{ 
+                              bgcolor: alpha(theme.palette.secondary.main, 0.1),
+                              color: theme.palette.secondary.main,
+                              fontWeight: 500,
+                              borderRadius: 1
+                            }}
+                          />
+                        </Box>
+                      </CardContent>
                       
-                      <Button
-                        size="small"
-                        variant="contained"
-                        startIcon={<DownloadIcon fontSize="small" />}
-                        onClick={() => handleDownload(paper._id)}
-                        sx={{ 
-                          borderRadius: 6,
-                          px: 2,
-                          bgcolor: '#3949ab',
-                          '&:hover': {
-                            bgcolor: '#303f9f'
-                          }
-                        }}
-                      >
-                        Download
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
-              ))}
+                      <CardActions sx={{ p: 2, pt: 0 }}>
+                        <Button
+                          size="small"
+                          onClick={() => navigate(`/papers/${paper._id}`)}
+                          sx={{ 
+                            fontWeight: 500,
+                            textTransform: 'none'
+                          }}
+                          startIcon={<InfoIcon fontSize="small" />}
+                        >
+                          View Details
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={() => handleDownload(paper._id)}
+                          sx={{ 
+                            ml: 'auto',
+                            fontWeight: 500,
+                            textTransform: 'none'
+                          }}
+                          startIcon={<DownloadIcon fontSize="small" />}
+                        >
+                          Download
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
               
-              {/* Empty State */}
-              {papers.length === 0 && (
-                <Grid item xs={12}>
-                  <Paper 
-                    elevation={0}
-                    sx={{ 
-                      p: 5, 
-                      textAlign: 'center',
-                      borderRadius: 3,
-                      bgcolor: 'white',
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-                      border: '1px solid #e0e0e0'
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <Box sx={{ mt: 4, display: 'flex', justifyContent: 'center' }}>
+                  <Pagination 
+                    count={totalPages} 
+                    page={page} 
+                    onChange={handlePageChange}
+                    color="primary"
+                    showFirstButton
+                    showLastButton
+                    sx={{
+                      '& .MuiPaginationItem-root': {
+                        fontWeight: 500
+                      }
                     }}
-                  >
-                    <Box sx={{ 
-                      width: 70, 
-                      height: 70, 
-                      borderRadius: '50%', 
-                      bgcolor: alpha('#3949ab', 0.08),
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      mx: 'auto',
-                      mb: 2
-                    }}>
-                      <SearchIcon fontSize="large" sx={{ color: '#3949ab' }} />
-                    </Box>
-                    
-                    <Typography variant="h6" gutterBottom sx={{ color: '#3949ab', fontWeight: 600 }}>
-                      No Question Papers Found
-                    </Typography>
-                    
-                    <Typography variant="body1" color="text.secondary" sx={{ mb: 3, maxWidth: 450, mx: 'auto' }}>
-                      We couldn't find any papers matching your search criteria. Try adjusting your filters or search for different keywords.
-                    </Typography>
-                    
-                    <Button
-                      variant="contained"
-                      onClick={clearFilters}
-                      sx={{ 
-                        px: 3,
-                        py: 1,
-                        borderRadius: 2,
-                        bgcolor: '#3949ab',
-                        '&:hover': {
-                          bgcolor: '#303f9f'
-                        }
-                      }}
-                    >
-                      Clear All Filters
-                    </Button>
-                  </Paper>
-                </Grid>
+                  />
+                </Box>
               )}
-            </Grid>
-            
-            {/* Bottom Pagination */}
-            {totalPages > 1 && papers.length > 0 && (
-              <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-                <Pagination 
-                  count={totalPages} 
-                  page={page} 
-                  onChange={handlePageChange} 
-                  color="primary" 
-                  size="large"
-                  shape="rounded"
-                  showFirstButton
-                  showLastButton
-                  sx={{
-                    '& .MuiPaginationItem-root': {
-                      fontWeight: 500
-                    }
-                  }}
-                />
-              </Box>
-            )}
-          </>
-        )}
+            </>
+          )}
+        </Paper>
       </Container>
     </Box>
   );

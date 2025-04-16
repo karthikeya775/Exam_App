@@ -1,0 +1,55 @@
+Set -A
+EEE202: Utilization of Electrical Energy
+Quiz - 2 (MS 2023-24)
+Date: 14/11/2023 Maximum Marks: 10 Time allowed: 30 minutes
+Instructions:
+e Carefully sign at the correct place in the attendance sheet.
+e Clearly write your name and admission number and sign in the space provided.
+e Any answer script without a name/admission number may not be evaluated.
+e Write your answer only in the space provided. Answers written at any other place may not be
+evaluated.
+e For a few fill-in-the-blank type questions, options are given within brackets immediately after
+the blank and separated by a ‘/’. The correct answer may be chosen from the given options.
+e For multiple-choice questions, one or more than one option may be correct. Marks will be
+awarded only if all correct options are selected.
+e Use space at the end of the question paper for rough work.
+e This question paper consists of 20 questions of 0.5 marks each.
+e Symbols used in this question paper have their usual meanings.
+
+Admission Number: Name: Sign:
+
+Q.1. Which of the following heating methods may use a high-frequency AC supply?
+OD Resistance heating Eddy current heating
+0 Arc heating Dielectric heating
+
+Q.2. Low-temperature heating chamber with provision of ventilation is termed as
+
+(oven/furnace).
+
+Q.3. An ideal heating element is one with (high/low) temperature coefficient.
+
+Q.4. Oxidation of graphite electrodes begins at a relatively (higher/lower) temperature
+compared to the carbon electrodes.
+
+Q.5. Temperature of charge in case of an indirect arc furnace is (higher/lower) than that of
+
+in case of a direct arc furnace.
+Q.6. When maximum power is delivered to an arc, the resistance of the arc is numerically equal to
+
+the (resistance/impedance/reactance) of the whole electric circuit referred to the
+secondary excluding the arc resistance.
+Q.7. Ajax Wyatt vertical core furnace is a type of (indirect/direct) heating.
+Q.8. High heat is obtained in dielectric heating by employing
+High-frequency OD Both high-voltage and high-frequency
+0D High voltage © None of the given options
+Q.9. Resistance welding methods which produce coalescence at one or more particular spot(s)
+is/are:
+© Butt welding Projection welding
+Spot welding 0 Seam welding
+Q.10. Which of the following welding methods shield the weld from oxygen and nitrogen?
+Shielded metal arc welding © Metal arc welding
+Submerged arc welding Carbon arc welding
+Q.11. Which of the following is/are the advantage(s) of electron beam welding?
+OD Itis cheap. Shielding gas is not needed.
+
+It gives pure weld. © None of the given options.
